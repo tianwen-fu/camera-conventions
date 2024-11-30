@@ -1,0 +1,113 @@
+#include <cstdio>
+#include <iostream>
+#include <memory>
+
+#include <glad/gl.h>
+// GLFW (include after glad)
+#include <GLFW/glfw3.h>
+
+#include "GLStructures.h"
+
+using std::cout, std::endl, std::clog;
+using std::unique_ptr;
+
+constexpr auto WIDTH = 800;
+constexpr auto HEIGHT = 600;
+
+static void framebufferSizeCallback(GLFWwindow *window, const int width, const int height) {
+    glViewport(0, 0, width, height);
+}
+
+static void messageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+                            GLsizei length, const GLchar *message,
+                            const void *userParam) {
+    if (type == GL_DEBUG_TYPE_ERROR)
+        clog << "GL ERROR [";
+    else
+        clog << "GL Message [";
+    clog << "severity " << severity << "] " << message << endl;
+}
+
+namespace SceneObjects {
+    static float vertices[] = {
+        0.0, 0.0, 1.0,
+        0.5, 0.0, 1.0,
+        0.0, 0.5, 1.0,
+        0.5, 0.5, 1.0
+    };
+
+    static float colors[] = {
+        1.0, 1.0, 1.0,
+        1.0, 0.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 0.0, 1.0
+    };
+
+    unique_ptr<VertexArray> vao;
+    unique_ptr<GLProgram> program;
+}
+
+static void initializeScene() {
+
+
+    auto vertices = std::make_unique<VBO>(SceneObjects::vertices, 3, std::size(SceneObjects::vertices) / 3,
+                                          GL_STATIC_DRAW);
+    auto colors = std::make_unique<VBO>(SceneObjects::colors, 3, std::size(SceneObjects::colors) / 3, GL_STATIC_DRAW);
+    SceneObjects::program = std::make_unique<GLProgram>(std::vector{
+        ShaderPath(ShaderType::VertexShader, "assets/shaders/camView.vert"),
+        ShaderPath(ShaderType::FragmentShader, "assets/shaders/camView.frag")
+    });
+    SceneObjects::program->use();
+    SceneObjects::vao = std::make_unique<VertexArray>();
+    SceneObjects::vao->bind();
+    SceneObjects::vao->addVBO(std::move(vertices), *SceneObjects::program, "position");
+    SceneObjects::vao->addVBO(std::move(colors), *SceneObjects::program, "color");
+    SceneObjects::program->validateAllAttributesSet(*SceneObjects::vao);
+    glPointSize(1000.0f);
+}
+
+int main() {
+    if (!glfwInit()) {
+        clog << "Failed to initialize GLFW!" << endl;
+        return -1;
+    }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // uncomment this statement to fix compilation on OS X
+#endif
+    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "CameraView", nullptr, nullptr);
+    glfwMakeContextCurrent(window);
+
+    const int version = gladLoadGL(glfwGetProcAddress);
+    if (version == 0) {
+        printf("Failed to initialize OpenGL context\n");
+        return -1;
+    }
+    clog << "OpenGL Version: " << GLAD_VERSION_MAJOR(version) << "." << GLAD_VERSION_MINOR(version) << endl;
+    clog << "OpenGL Renderer: " << glGetString(GL_RENDERER) << endl;
+    clog << "Shading Language Version: "
+            << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+
+    glViewport(0, 0, WIDTH, HEIGHT);
+    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(messageCallback, nullptr);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    initializeScene();
+
+    while (!glfwWindowShouldClose(window)) {
+        glClear(GL_COLOR_BUFFER_BIT);
+        SceneObjects::vao->bind();
+        glDrawArrays(GL_POINTS, 0, std::size(SceneObjects::vertices) / 3);
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
+    return 0;
+}
