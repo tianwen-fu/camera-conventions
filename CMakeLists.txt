@@ -34,8 +34,11 @@ target_sources(camViewer PUBLIC external/glad/src/gl.c external/glad/src/egl.c)
 add_custom_target(copy_assets
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/assets ${CMAKE_CURRENT_BINARY_DIR}/assets
 )
-add_custom_target(copy_dlls
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:camViewer> $<TARGET_FILE_DIR:camViewer>
-        COMMAND_EXPAND_LISTS
-)
-add_dependencies(camViewer copy_assets copy_dlls)
+add_dependencies(camViewer copy_assets)
+if(WIN32)
+    add_custom_target(copy_dlls
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:camViewer> $<TARGET_FILE_DIR:camViewer>
+            COMMAND_EXPAND_LISTS
+    )
+    add_dependencies(camViewer copy_dlls)
+endif ()

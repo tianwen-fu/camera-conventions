@@ -30,10 +30,10 @@ static void messageCallback(GLenum source, GLenum type, GLuint id, GLenum severi
 
 namespace SceneObjects {
     static float vertices[] = {
-        0.0, 0.0, 1.0,
-        0.5, 0.0, 1.0,
-        0.0, 0.5, 1.0,
-        0.5, 0.5, 1.0
+        0.0, 0.0, 0.5,
+        0.5, 0.0, 0.5,
+        0.0, 0.5, 0.5,
+        0.5, 0.5, 0.5
     };
 
     static float colors[] = {
@@ -48,8 +48,6 @@ namespace SceneObjects {
 }
 
 static void initializeScene() {
-
-
     auto vertices = std::make_unique<VBO>(SceneObjects::vertices, 3, std::size(SceneObjects::vertices) / 3,
                                           GL_STATIC_DRAW);
     auto colors = std::make_unique<VBO>(SceneObjects::colors, 3, std::size(SceneObjects::colors) / 3, GL_STATIC_DRAW);
@@ -72,11 +70,15 @@ int main() {
         return -1;
     }
 
+#ifdef __APPLE__
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // uncomment this statement to fix compilation on OS X
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#else
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
     GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "CameraView", nullptr, nullptr);
     glfwMakeContextCurrent(window);
@@ -94,14 +96,17 @@ int main() {
     glViewport(0, 0, WIDTH, HEIGHT);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     glEnable(GL_DEPTH_TEST);
+#ifndef __APPLE__
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(messageCallback, nullptr);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+#endif
 
     initializeScene();
 
     while (!glfwWindowShouldClose(window)) {
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        SceneObjects::program->use();
         SceneObjects::vao->bind();
         glDrawArrays(GL_POINTS, 0, std::size(SceneObjects::vertices) / 3);
         glfwSwapBuffers(window);
