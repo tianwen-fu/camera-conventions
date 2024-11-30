@@ -61,7 +61,6 @@ static void initializeScene() {
     SceneObjects::vao->addVBO(std::move(vertices), *SceneObjects::program, "position");
     SceneObjects::vao->addVBO(std::move(colors), *SceneObjects::program, "color");
     SceneObjects::program->validateAllAttributesSet(*SceneObjects::vao);
-    glPointSize(1000.0f);
 }
 
 int main() {
