@@ -29,19 +29,48 @@ static void messageCallback(GLenum source, GLenum type, GLuint id, GLenum severi
 }
 
 namespace SceneObjects {
-    static float vertices[] = {
-        0.0, 0.0, 0.5,
-        0.5, 0.0, 0.5,
-        0.0, 0.5, 0.5,
-        0.5, 0.5, 0.5
+    float vertices[] = {
+        0.0, 0.2, 0.5, // +x
+        0.2, -0.1, 0.3,
+        0.2, -0.1, 0.7,
+        0.0, 0.2, 0.5, // +z
+        -0.2, -0.1, 0.7,
+        0.2, -0.1, 0.7,
+        0.0, 0.2, 0.5, // -x
+        -0.2, -0.1, 0.3,
+        -0.2, -0.1, 0.7,
+        0.0, 0.2, 0.5, // -z
+        -0.2, -0.1, 0.3,
+        0.2, -0.1, 0.3,
+        0.2, -0.1, 0.3, // bottom +x +z
+        0.2, -0.1, 0.7,
+        -0.2, -0.1, 0.7,
+        -0.2, -0.1, 0.3, // bottom -x -z
+        0.2, -0.1, 0.7,
+        -0.2, -0.1, 0.7
     };
 
-    static float colors[] = {
-        1.0, 1.0, 1.0,
+    float colors[] = {
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
         1.0, 0.0, 0.0,
         0.0, 1.0, 0.0,
-        0.0, 0.0, 1.0
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        1.0, 1.0, 0.0,
+        1.0, 1.0, 0.0,
+        1.0, 1.0, 0.0,
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0
     };
+    static_assert(std::size(vertices) == std::size(colors));
 
     unique_ptr<VertexArray> vao;
     unique_ptr<GLProgram> program;
@@ -92,6 +121,7 @@ int main() {
     clog << "Shading Language Version: "
             << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 
+    glfwSetWindowSize(window, WIDTH, HEIGHT);
     glViewport(0, 0, WIDTH, HEIGHT);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     glEnable(GL_DEPTH_TEST);
@@ -107,7 +137,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         SceneObjects::program->use();
         SceneObjects::vao->bind();
-        glDrawArrays(GL_POINTS, 0, std::size(SceneObjects::vertices) / 3);
+        glDrawArrays(GL_TRIANGLES, 0, std::size(SceneObjects::vertices) / 3);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
