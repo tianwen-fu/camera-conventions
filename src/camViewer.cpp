@@ -28,6 +28,11 @@ static void messageCallback(GLenum source, GLenum type, GLuint id, GLenum severi
     clog << "severity " << severity << "] " << message << endl;
 }
 
+static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GL_TRUE);
+}
+
 namespace SceneObjects {
     float vertices[] = {
         0.0, 0.2, 0.5, // +x
@@ -129,6 +134,7 @@ int main() {
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(messageCallback, nullptr);
 #endif
+    glfwSetKeyCallback(window, keyCallback);
 
     initializeScene();
 
@@ -142,6 +148,8 @@ int main() {
         glfwPollEvents();
     }
 
+    SceneObjects::vao = nullptr;
+    SceneObjects::program = nullptr;
     glfwTerminate();
     return 0;
 }
