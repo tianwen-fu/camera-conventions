@@ -1,12 +1,19 @@
 import bpy
 import bmesh
 import json
+import os
 
-FILE = "/home/tfu/source/cameraParameters/assets/scenes/pyramid.json"
+SCRIPT_PATH = bpy.context.space_data.text.filepath
+FILE = os.path.abspath(
+    os.path.dirname(SCRIPT_PATH) + "/../assets/geometries/pyramid_blender.json"
+)
 data = json.load(open(FILE))
 verts = data["vertices"]
 faces = data["faces"]
 assert data["convention"] == "Blender"
+
+print(FILE)
+print("Vertices", verts)
 
 
 def add_mesh(name, verts, faces, edges=None, col_name="Collection"):
