@@ -6,6 +6,7 @@ FILE = "/home/tfu/source/cameraParameters/assets/scenes/pyramid.json"
 data = json.load(open(FILE))
 verts = data["vertices"]
 faces = data["faces"]
+assert data["convention"] == "Blender"
 
 
 def add_mesh(name, verts, faces, edges=None, col_name="Collection"):
