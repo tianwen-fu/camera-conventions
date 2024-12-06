@@ -101,13 +101,12 @@ static void initializeScene() {
     SceneObjects::program->validateAllAttributesSet(*SceneObjects::vao);
     glPointSize(10.0f);
     SceneObjects::cameraParams = CameraParams::fromFile(
-        "assets/cameras/robCam.txt");
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            cout << SceneObjects::cameraParams.T[i][j] << " ";
-        }
-        cout << endl;
-    }
+        "assets/cameras/testCam.txt");
+    SceneObjects::program->use();
+    SceneObjects::program->
+        setUniformMatrix4fv("extrinsics",
+                            reinterpret_cast<const float *>(
+                                SceneObjects::cameraParams.T), GL_TRUE);
 }
 
 int main() {
@@ -125,6 +124,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 #endif
     GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "CameraView", nullptr,
                                           nullptr);
