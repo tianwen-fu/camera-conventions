@@ -29,6 +29,9 @@ endif ()
 
 add_subdirectory(external/glm)
 
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+add_subdirectory(external/json)
+
 if (MSVC)
     # this would require adding/copying the DLL from a nontrivial path, on which I don't want to work now
     # See https://stackoverflow.com/questions/66531482/application-crashes-when-using-address-sanitizer-with-msvc
@@ -37,7 +40,7 @@ elseif (UNIX)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
 endif ()
 
-target_link_libraries(camViewer glm::glm)
+target_link_libraries(camViewer glm::glm nlohmann_json::nlohmann_json)
 target_include_directories(camViewer PUBLIC
         ${OPENGL_INCLUDE_DIR}
         "external/glad/include"
@@ -54,4 +57,6 @@ if(WIN32)
             COMMAND_EXPAND_LISTS
     )
     add_dependencies(camViewer copy_dlls)
+    # add this line to avoid CMake failing to copy the (nonexistent) DLLs
+    add_dependencies(copy_dlls glfw glm::glm nlohmann_json::nlohmann_json)
 endif ()

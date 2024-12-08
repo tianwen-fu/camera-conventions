@@ -1,16 +1,20 @@
 #include <cstdio>
 #include <iostream>
 #include <memory>
+#include <fstream>
 
 #include <glad/gl.h>
 // GLFW (include after glad)
 #include <GLFW/glfw3.h>
+#include <nlohmann/json.hpp>
 
 #include "GLStructures.h"
 #include "readCamera.h"
 
+
 using std::cout, std::endl, std::clog;
 using std::unique_ptr;
+using json = nlohmann::json;
 
 constexpr auto WIDTH = 800;
 constexpr auto HEIGHT = 600;
@@ -114,6 +118,8 @@ int main() {
         clog << "Failed to initialize GLFW!" << endl;
         return -1;
     }
+    std::ifstream ifs("assets/cameras/testCam.json");
+    auto js = json::parse(ifs);
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
