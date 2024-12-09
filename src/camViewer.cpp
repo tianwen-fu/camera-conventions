@@ -1,20 +1,17 @@
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <memory>
-#include <fstream>
 
 #include <glad/gl.h>
 // GLFW (include after glad)
 #include <GLFW/glfw3.h>
-#include <nlohmann/json.hpp>
 
 #include "GLStructures.h"
 #include "readCamera.h"
 
-
 using std::cout, std::endl, std::clog;
 using std::unique_ptr;
-using json = nlohmann::json;
 
 constexpr auto WIDTH = 800;
 constexpr auto HEIGHT = 600;
@@ -25,9 +22,8 @@ static void framebufferSizeCallback(GLFWwindow *window, const int width,
 }
 
 static void messageCallback(GLenum source, GLenum type, GLuint id,
-                            GLenum severity,
-                            GLsizei length, const GLchar *message,
-                            const void *userParam) {
+                            GLenum severity, GLsizei length,
+                            const GLchar *message, const void *userParam) {
     if (type == GL_DEBUG_TYPE_ERROR)
         clog << "GL ERROR [";
     else
@@ -37,52 +33,25 @@ static void messageCallback(GLenum source, GLenum type, GLuint id,
 
 namespace SceneObjects {
 float vertices[] = {
-    0.0, 0.2, 0.5, // +x
-    0.2, -0.1, 0.3,
-    0.2, -0.1, 0.7,
-    0.0, 0.2, 0.5, // +z
-    -0.2, -0.1, 0.7,
-    0.2, -0.1, 0.7,
-    0.0, 0.2, 0.5, // -x
-    -0.2, -0.1, 0.3,
-    -0.2, -0.1, 0.7,
-    0.0, 0.2, 0.5, // -z
-    -0.2, -0.1, 0.3,
-    0.2, -0.1, 0.3,
-    0.2, -0.1, 0.3, // bottom +x +z
-    0.2, -0.1, 0.7,
-    -0.2, -0.1, 0.7,
-    -0.2, -0.1, 0.3, // bottom -x -z
-    0.2, -0.1, 0.3,
-    -0.2, -0.1, 0.7
-};
+    0.0,  0.2,  0.5,                                   // +x
+    0.2,  -0.1, 0.3, 0.2,  -0.1, 0.7, 0.0,  0.2,  0.5, // +z
+    -0.2, -0.1, 0.7, 0.2,  -0.1, 0.7, 0.0,  0.2,  0.5, // -x
+    -0.2, -0.1, 0.3, -0.2, -0.1, 0.7, 0.0,  0.2,  0.5, // -z
+    -0.2, -0.1, 0.3, 0.2,  -0.1, 0.3, 0.2,  -0.1, 0.3, // bottom +x +z
+    0.2,  -0.1, 0.7, -0.2, -0.1, 0.7, -0.2, -0.1, 0.3, // bottom -x -z
+    0.2,  -0.1, 0.3, -0.2, -0.1, 0.7};
 
-float colors[] = {
-    1.0, 0.0, 0.0,
-    1.0, 0.0, 0.0,
-    1.0, 0.0, 0.0,
-    0.0, 1.0, 0.0,
-    0.0, 1.0, 0.0,
-    0.0, 1.0, 0.0,
-    0.0, 0.0, 1.0,
-    0.0, 0.0, 1.0,
-    0.0, 0.0, 1.0,
-    1.0, 1.0, 0.0,
-    1.0, 1.0, 0.0,
-    1.0, 1.0, 0.0,
-    1.0, 1.0, 1.0,
-    1.0, 1.0, 1.0,
-    1.0, 1.0, 1.0,
-    1.0, 1.0, 1.0,
-    1.0, 1.0, 1.0,
-    1.0, 1.0, 1.0
-};
+float colors[] = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+                  0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+                  0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
+                  1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                  1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 static_assert(std::size(vertices) == std::size(colors));
 
 unique_ptr<VertexArray> vao;
 unique_ptr<GLProgram> program;
 CameraParams cameraParams;
-}
+} // namespace SceneObjects
 
 static void initializeScene() {
     auto vertices = std::make_unique<VBO>(SceneObjects::vertices, 3,
@@ -93,8 +62,7 @@ static void initializeScene() {
                                         GL_STATIC_DRAW);
     SceneObjects::program = std::make_unique<GLProgram>(std::vector{
         ShaderPath(ShaderType::VertexShader, "assets/shaders/camView.vert"),
-        ShaderPath(ShaderType::FragmentShader, "assets/shaders/camView.frag")
-    });
+        ShaderPath(ShaderType::FragmentShader, "assets/shaders/camView.frag")});
     SceneObjects::program->use();
     SceneObjects::vao = std::make_unique<VertexArray>();
     SceneObjects::vao->bind();
@@ -104,13 +72,12 @@ static void initializeScene() {
                               "color");
     SceneObjects::program->validateAllAttributesSet(*SceneObjects::vao);
     glPointSize(10.0f);
-    SceneObjects::cameraParams = CameraParams::fromFile(
-        "assets/cameras/testCam.txt");
+    SceneObjects::cameraParams =
+        CameraParams::fromFile("assets/cameras/testCam.json");
     SceneObjects::program->use();
-    SceneObjects::program->
-        setUniformMatrix4fv("extrinsics",
-                            reinterpret_cast<const float *>(
-                                SceneObjects::cameraParams.T), GL_TRUE);
+    SceneObjects::program->setUniformMatrix4fv(
+        "extrinsics",
+        reinterpret_cast<const float *>(SceneObjects::cameraParams.T), GL_TRUE);
 }
 
 int main() {
@@ -118,8 +85,6 @@ int main() {
         clog << "Failed to initialize GLFW!" << endl;
         return -1;
     }
-    std::ifstream ifs("assets/cameras/testCam.json");
-    auto js = json::parse(ifs);
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -132,8 +97,8 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 #endif
-    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "CameraView", nullptr,
-                                          nullptr);
+    GLFWwindow *window =
+        glfwCreateWindow(WIDTH, HEIGHT, "CameraView", nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
     const int version = gladLoadGL(glfwGetProcAddress);
@@ -141,11 +106,11 @@ int main() {
         printf("Failed to initialize OpenGL context\n");
         return -1;
     }
-    clog << "OpenGL Version: " << GLAD_VERSION_MAJOR(version) << "." <<
-        GLAD_VERSION_MINOR(version) << endl;
+    clog << "OpenGL Version: " << GLAD_VERSION_MAJOR(version) << "."
+         << GLAD_VERSION_MINOR(version) << endl;
     clog << "OpenGL Renderer: " << glGetString(GL_RENDERER) << endl;
     clog << "Shading Language Version: "
-        << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+         << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 
     glfwSetWindowSize(window, WIDTH, HEIGHT);
     glViewport(0, 0, WIDTH, HEIGHT);
