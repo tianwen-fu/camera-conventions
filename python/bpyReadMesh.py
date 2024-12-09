@@ -10,6 +10,7 @@ FILE = os.path.abspath(
 data = json.load(open(FILE))
 verts = data["vertices"]
 faces = data["faces"]
+colors = data.get("vertex_colors", None)
 assert data["convention"] == "Blender"
 
 print(FILE)
@@ -25,6 +26,10 @@ def add_mesh(name, verts, faces, edges=None, col_name="Collection"):
     col.objects.link(obj)
     bpy.context.view_layer.objects.active = obj
     mesh.from_pydata(verts, edges, faces)
+    if colors is not None:
+        color_att = mesh.color_attributes.new("Color", "BYTE_COLOR", "POINT")
+        for color, vertex in zip(colors, color_att.data):
+            vertex.color_srgb = color + [255]
 
 
 add_mesh("pyramid", verts, faces)
