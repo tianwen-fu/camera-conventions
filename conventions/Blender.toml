@@ -1,0 +1,13 @@
+[common]
+name = Blender
+
+[world]
+up = z
+right = y
+forward = x
+
+[camera]
+up = y
+right = x
+lookat = -z
+transform = cam2world

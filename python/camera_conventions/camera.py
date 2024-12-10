@@ -13,19 +13,21 @@ class Camera:
     T: np.ndarray  # 4x4 matrix
     convention: Convention
 
-    FLOAT_FORMAT: ClassVar[str] = "{:.10f}"
-
     def convert(self, convention: Convention):
         if self.convention == convention:
             return self
-        matrix = convention_convertion_matrix(convention, self.convention)  # 3x3 matrix
-        C = -self.T[:3, :3].T @ self.T[:3, 3]
-        C_new = (C[np.newaxis, :] @ matrix.T).squeeze(axis=0)
-        R = self.T[:3, :3]
-        R_new = matrix @ R @ np.linalg.inv(matrix)
-        T_new = np.eye(4)
-        T_new[:3, :3] = R_new
-        T_new[:3, 3] = -R_new @ C_new
+        T = self.T
+        if not self.convention.is_world_to_camera:
+            T = np.linalg.inv(T)
+        # T is (R | t)
+        opengl_to_self = self.convention.world_transformation_matrix
+        opengl_to_convention = convention.world_transformation_matrix
+        convention_to_self = opengl_to_self @ np.linalg.inv(opengl_to_convention)
+        conversion = np.eye(4)
+        conversion[:3, :3] = convention_to_self
+        T_new = T @ conversion
+        if not convention.is_world_to_camera:
+            T_new = np.linalg.inv(T_new)
         new_camera = deepcopy(self)
         new_camera.T = T_new
         new_camera.convention = convention
@@ -35,7 +37,12 @@ class Camera:
         data = {
             "fhat": self.fhat,
             "T": self.T.tolist(),
-            "convention": self.convention,
+            "convention": self.convention.name,
         }
         with open(filename, "wt") as f:
             json.dump(data, f, indent=2)
+
+    def from_json(file, convention: Convention):
+        data = json.load(file)
+        assert data["convention"] == convention.name
+        return Camera(data["fhat"], np.array(data["T"]), convention)

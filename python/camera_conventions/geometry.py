@@ -26,9 +26,9 @@ class Geometry:
             assert self.vertex_colors.shape[1] == 3
             assert self.vertex_colors.dtype == np.uint8
 
-    def dump(self, file: PathLike):
+    def to_json(self, file: PathLike):
         data = {
-            "convention": self.convention,
+            "convention": self.convention.name,
             "vertices": self.verts.tolist(),
             "faces": self.faces.tolist(),
         }
@@ -39,7 +39,9 @@ class Geometry:
     def convert(self, convention: Convention):
         if self.convention == convention:
             return self
-        matrix = convention_convertion_matrix(convention, self.convention)
+        opengl_to_self = self.convention.world_transformation_matrix
+        opengl_to_convention = convention.world_transformation_matrix
+        matrix = opengl_to_convention @ np.linalg.inv(opengl_to_self)
         return Geometry(
             convention=convention,
             verts=self.verts @ matrix.T,
@@ -48,7 +50,7 @@ class Geometry:
         )
 
     @staticmethod
-    def load(file):
+    def from_json(file, convention: Convention):
         data = json.load(file)
         if "vertex_colors" in data:
             vertex_colors = np.array(data["vertex_colors"])
@@ -56,8 +58,9 @@ class Geometry:
             vertex_colors = vertex_colors.astype(np.uint8)
         else:
             vertex_colors = None
+        assert data["convention"] == convention.name
         return Geometry(
-            convention=data["convention"],
+            convention=convention,
             verts=np.array(data["vertices"]),
             faces=np.array(data["faces"]),
             # none if not present
