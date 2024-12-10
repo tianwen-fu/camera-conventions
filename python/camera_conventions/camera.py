@@ -8,12 +8,8 @@ from copy import deepcopy
 
 @dataclass
 class Camera:
-    width: float
-    height: float
-    fx: float
-    fy: float
-    cx: float
-    cy: float
+    # we always assume fx=fy, and the principal point is at the center of the image
+    fhat: float  # f / w
     T: np.ndarray  # 4x4 matrix
     convention: Convention
 
@@ -55,12 +51,7 @@ class Camera:
 
     def to_json(self, filename: str):
         data = {
-            "width": self.width,
-            "height": self.height,
-            "fx": self.fx,
-            "fy": self.fy,
-            "cx": self.cx,
-            "cy": self.cy,
+            "fhat": self.fhat,
             "T": self.T.tolist(),
             "convention": self.convention,
         }
