@@ -31,24 +31,6 @@ class Camera:
         new_camera.convention = convention
         return new_camera
 
-    def to_txt(self, filename: str):
-        assert self.convention == "OpenGL"
-        with open(filename, "wt") as f:
-            print(
-                f"{self.FLOAT_FORMAT.format(self.width)} {self.FLOAT_FORMAT.format(self.height)}",
-                file=f,
-            )
-            print(
-                f"{self.FLOAT_FORMAT.format(self.fx)} {self.FLOAT_FORMAT.format(self.fy)}",
-                file=f,
-            )
-            print(
-                f"{self.FLOAT_FORMAT.format(self.cx)} {self.FLOAT_FORMAT.format(self.cy)}",
-                file=f,
-            )
-            for row in self.T:
-                print(" ".join(self.FLOAT_FORMAT.format(elem) for elem in row), file=f)
-
     def to_json(self, filename: str):
         data = {
             "fhat": self.fhat,
