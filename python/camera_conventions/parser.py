@@ -3,7 +3,7 @@ from camera_conventions import Convention
 from os import PathLike
 import numpy as np
 
-__all__ = ["parse_toml"]
+__all__ = ["parse_ini"]
 
 
 class _ParsedCamera(Convention):
@@ -32,7 +32,7 @@ UNIT_VECTORS = dict(
 )
 
 
-def parse_toml(file_path: PathLike) -> Convention:
+def parse_ini(file_path: PathLike) -> Convention:
     config = configparser.ConfigParser()
     config.read(file_path)
     M = np.array(
