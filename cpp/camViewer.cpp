@@ -9,6 +9,7 @@
 
 #include "GLStructures.h"
 #include "readCamera.h"
+#include "readGeometry.h"
 
 using std::cout, std::endl, std::clog;
 using std::unique_ptr;
@@ -32,52 +33,44 @@ static void messageCallback(GLenum source, GLenum type, GLuint id,
 }
 
 namespace SceneObjects {
-float vertices[] = {
-    0.0,  0.2,  0.5,                                   // +x
-    0.2,  -0.1, 0.3, 0.2,  -0.1, 0.7, 0.0,  0.2,  0.5, // +z
-    -0.2, -0.1, 0.7, 0.2,  -0.1, 0.7, 0.0,  0.2,  0.5, // -x
-    -0.2, -0.1, 0.3, -0.2, -0.1, 0.7, 0.0,  0.2,  0.5, // -z
-    -0.2, -0.1, 0.3, 0.2,  -0.1, 0.3, 0.2,  -0.1, 0.3, // bottom +x +z
-    0.2,  -0.1, 0.7, -0.2, -0.1, 0.7, -0.2, -0.1, 0.3, // bottom -x -z
-    0.2,  -0.1, 0.3, -0.2, -0.1, 0.7};
-
-float colors[] = {1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-                  0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-                  0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
-                  1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-                  1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-static_assert(std::size(vertices) == std::size(colors));
+// collect the opengl global variables together
+std::vector<std::array<float, 3>> vertices;
+std::vector<std::array<float, 3>> colors;
 
 unique_ptr<VertexArray> vao;
 unique_ptr<GLProgram> program;
 CameraParams cameraParams;
+float perspectiveMatrix[16];
 } // namespace SceneObjects
 
 static void initializeScene() {
-    auto vertices = std::make_unique<VBO>(SceneObjects::vertices, 3,
-                                          std::size(SceneObjects::vertices) / 3,
-                                          GL_STATIC_DRAW);
-    auto colors = std::make_unique<VBO>(SceneObjects::colors, 3,
-                                        std::size(SceneObjects::colors) / 3,
-                                        GL_STATIC_DRAW);
-    SceneObjects::program = std::make_unique<GLProgram>(std::vector{
+    using namespace SceneObjects;
+    readGeometry("assets/geometries/pyramid.json", vertices, colors);
+    assert(vertices.size() == colors.size());
+    auto verticesVBO = std::make_unique<VBO>(
+        reinterpret_cast<const float *>(vertices.data()), 3, vertices.size(),
+        GL_STATIC_DRAW);
+    auto colorsVBO = std::make_unique<VBO>(
+        reinterpret_cast<const float *>(colors.data()), 3,
+        colors.size(), GL_STATIC_DRAW);
+    program = std::make_unique<GLProgram>(std::vector{
         ShaderPath(ShaderType::VertexShader, "assets/shaders/camView.vert"),
         ShaderPath(ShaderType::FragmentShader, "assets/shaders/camView.frag")});
-    SceneObjects::program->use();
-    SceneObjects::vao = std::make_unique<VertexArray>();
-    SceneObjects::vao->bind();
-    SceneObjects::vao->addVBO(std::move(vertices), *SceneObjects::program,
-                              "position");
-    SceneObjects::vao->addVBO(std::move(colors), *SceneObjects::program,
-                              "color");
-    SceneObjects::program->validateAllAttributesSet(*SceneObjects::vao);
+    program->use();
+    vao = std::make_unique<VertexArray>();
+    vao->bind();
+    vao->addVBO(std::move(verticesVBO), *program, "position");
+    vao->addVBO(std::move(colorsVBO), *program, "color");
+    program->validateAllAttributesSet(*vao);
     glPointSize(10.0f);
-    SceneObjects::cameraParams =
-        CameraParams::fromFile("assets/cameras/testCam.json");
-    SceneObjects::program->use();
-    SceneObjects::program->setUniformMatrix4fv(
+    cameraParams =
+        CameraParams::fromFile("assets/cameras/testCam.json", WIDTH, HEIGHT);
+    program->use();
+    program->setUniformMatrix4fv(
         "extrinsics",
-        reinterpret_cast<const float *>(SceneObjects::cameraParams.T), GL_TRUE);
+        reinterpret_cast<const float *>(cameraParams.T), GL_TRUE);
+    cameraParams.toPerspectiveMatrix(perspectiveMatrix, 0.1f, 3.0f);
+    program->setUniformMatrix4fv("intrinsics", perspectiveMatrix, GL_FALSE);
 }
 
 int main() {
@@ -107,10 +100,10 @@ int main() {
         return -1;
     }
     clog << "OpenGL Version: " << GLAD_VERSION_MAJOR(version) << "."
-         << GLAD_VERSION_MINOR(version) << endl;
+        << GLAD_VERSION_MINOR(version) << endl;
     clog << "OpenGL Renderer: " << glGetString(GL_RENDERER) << endl;
     clog << "Shading Language Version: "
-         << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+        << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 
     glfwSetWindowSize(window, WIDTH, HEIGHT);
     glViewport(0, 0, WIDTH, HEIGHT);
@@ -128,7 +121,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         SceneObjects::program->use();
         SceneObjects::vao->bind();
-        glDrawArrays(GL_TRIANGLES, 0, std::size(SceneObjects::vertices) / 3);
+        glDrawArrays(GL_TRIANGLES, 0, SceneObjects::vertices.size());
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

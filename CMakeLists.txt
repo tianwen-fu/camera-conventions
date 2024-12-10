@@ -10,7 +10,9 @@ find_package(OpenGL REQUIRED)
 
 add_executable(camViewer cpp/camViewer.cpp cpp/GLProgram.cpp cpp/GLProgram.h cpp/GLStructures.cpp cpp/GLStructures.h
         cpp/readCamera.cpp
-        cpp/readCamera.h)
+        cpp/readCamera.h
+        cpp/readGeometry.cpp
+        cpp/readGeometry.h)
 target_link_libraries(camViewer ${OPENGL_LIBRARIES})
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
