@@ -4,6 +4,7 @@ import json
 from camera_conventions import Convention
 from copy import deepcopy
 from os import PathLike
+from typing import Optional
 
 
 @dataclass
@@ -58,9 +59,11 @@ class Camera:
 
 
 def parse_alicevision_camera(
-    file_path: PathLike, alice_convention: Convention
+    file_path: PathLike, alice_convention: Convention, data_out: Optional[dict] = None
 ) -> Camera:
     assert alice_convention.name == "AliceVision"
+    if data_out is None:
+        data_out = {}
     f = None
     w, h = None, None
     T = None
@@ -68,8 +71,10 @@ def parse_alicevision_camera(
         while (line := file.readline().strip()) != "":
             if line == "#focal length":
                 f = float(file.readline().strip().split()[0])
+                data_out["focal_length"] = f
             if line == "#resolution":
                 w, h = map(int, file.readline().strip().split())
+                data_out["resolution"] = (w, h)
             if line == "MATRIX :":
                 T = np.array(list(map(float, file.read().split()))).reshape(4, 4)
     T[:3, 3] /= 100  # convert from cm to m
