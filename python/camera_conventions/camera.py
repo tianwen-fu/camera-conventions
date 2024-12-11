@@ -1,8 +1,7 @@
 import numpy as np
 from dataclasses import dataclass
-from typing import ClassVar
 import json
-from . import Convention, convention_convertion_matrix
+from camera_conventions import Convention
 from copy import deepcopy
 from os import PathLike
 
@@ -25,9 +24,14 @@ class Camera:
         opengl_to_self = self.convention.world_transformation_matrix
         opengl_to_convention = convention.world_transformation_matrix
         convention_to_self = opengl_to_self @ np.linalg.inv(opengl_to_convention)
-        conversion = np.eye(4)
-        conversion[:3, :3] = convention_to_self
-        T_new = T @ conversion
+        world_conv = np.eye(4)
+        world_conv[:3, :3] = convention_to_self
+        opengl_to_self = self.convention.camera_transformation_matrix
+        opengl_to_convention = convention.camera_transformation_matrix
+        self_to_convention = opengl_to_convention @ np.linalg.inv(opengl_to_self)
+        cam_conv = np.eye(4)
+        cam_conv[:3, :3] = self_to_convention
+        T_new = cam_conv @ T @ world_conv
         if not convention.is_world_to_camera:
             T_new = np.linalg.inv(T_new)
         new_camera = deepcopy(self)

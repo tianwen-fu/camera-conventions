@@ -5,7 +5,7 @@ from os import PathLike
 
 import numpy as np
 
-from . import convention_convertion_matrix, Convention
+from camera_conventions import Convention
 
 
 @dataclass
