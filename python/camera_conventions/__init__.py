@@ -33,6 +33,9 @@ class Convention(ABC):
     def __eq__(self, other):
         return self.name == other.name
 
+    def __repr__(self):
+        return self.name
+
 
 def convention_convertion_matrix(tgt_conv: Convention, src_conv: Convention):  # 3x3
     if src_conv != "OpenGL" and tgt_conv == "OpenGL":
