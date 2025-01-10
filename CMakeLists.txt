@@ -8,12 +8,31 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 find_package(OpenGL REQUIRED)
 
-add_executable(camViewer src/camViewer.cpp src/GLProgram.cpp src/GLProgram.h src/GLStructures.cpp src/GLStructures.h)
+add_executable(camViewer cpp/camViewer.cpp cpp/GLProgram.cpp cpp/GLProgram.h cpp/GLStructures.cpp cpp/GLStructures.h
+        cpp/readCamera.cpp
+        cpp/readCamera.h
+        cpp/readGeometry.cpp
+        cpp/readGeometry.h)
 target_link_libraries(camViewer ${OPENGL_LIBRARIES})
 
-set(GLFW_LIBRARY_TYPE SHARED)
-add_subdirectory(external/glfw)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+find_package(GLFW3 QUIET)
+if(GLFW3_FOUND)
+    message(STATUS "GLFW found, using system version")
+    target_include_directories(camViewer PUBLIC ${GLFW3_INCLUDE_DIR})
+    target_link_libraries(camViewer ${GLFW3_LIBRARY})
+else ()
+    message(STATUS "GLFW not found, using bundled version")
+    set(GLFW_LIBRARY_TYPE SHARED)
+    add_subdirectory(external/glfw)
+    target_include_directories(camViewer PUBLIC "external/glfw/include")
+    target_link_libraries(camViewer glfw)
+endif ()
+
 add_subdirectory(external/glm)
+
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+add_subdirectory(external/json)
 
 if (MSVC)
     # this would require adding/copying the DLL from a nontrivial path, on which I don't want to work now
@@ -23,11 +42,10 @@ elseif (UNIX)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
 endif ()
 
-target_link_libraries(camViewer glfw glm::glm)
+target_link_libraries(camViewer glm::glm nlohmann_json::nlohmann_json)
 target_include_directories(camViewer PUBLIC
         ${OPENGL_INCLUDE_DIR}
         "external/glad/include"
-        "external/glfw/include"
         "external/glm")
 target_sources(camViewer PUBLIC external/glad/src/gl.c external/glad/src/egl.c)
 
@@ -41,4 +59,6 @@ if(WIN32)
             COMMAND_EXPAND_LISTS
     )
     add_dependencies(camViewer copy_dlls)
+    # add this line to avoid CMake failing to copy the (nonexistent) DLLs
+    add_dependencies(copy_dlls glfw glm::glm nlohmann_json::nlohmann_json)
 endif ()
