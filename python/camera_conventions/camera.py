@@ -40,15 +40,17 @@ class Camera:
         new_camera.convention = convention
         return new_camera
 
-    def to_json(self, filename: str):
-        data = {
+    def to_dict(self):
+        return {
             "fhat": self.fhat,
             "T": self.T.tolist(),
             "aspect_ratio": self.aspect_ratio,
             "convention": self.convention.name,
         }
+
+    def to_json(self, filename: str):
         with open(filename, "wt") as f:
-            json.dump(data, f, indent=2)
+            json.dump(self.to_dict(), f, indent=2)
 
     def from_json(file, convention: Convention):
         data = json.load(file)
