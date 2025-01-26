@@ -1,0 +1,6 @@
+{
+    "files.exclude": {
+        "build/": true,
+        "cmake-build-*": true
+    }
+}

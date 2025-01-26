@@ -9,7 +9,7 @@ from camera_conventions.parser import parse_ini_convention
 def main():
     conventions_path = Path(__file__).parent.parent / "conventions"
     aliceCamera = parse_ini_convention(conventions_path / "alicevision.ini")
-    nersemble = parse_ini_convention(conventions_path / "nersemble.ini")
+    nersemble = parse_ini_convention(conventions_path / "OpenCV.ini")
     blender = parse_ini_convention(conventions_path / "Blender.ini")
     opengl = parse_ini_convention(conventions_path / "OpenGL.ini")
     camera_param_path = Path("/nas/RobFacialPerformace/01/cameras")

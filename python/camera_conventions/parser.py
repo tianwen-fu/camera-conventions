@@ -1,6 +1,7 @@
 import configparser
 from camera_conventions import Convention
 from os import PathLike
+from pathlib import Path
 import numpy as np
 
 __all__ = ["parse_ini_convention"]
@@ -42,6 +43,8 @@ UNIT_VECTORS = {
 
 def parse_ini_convention(file_path: PathLike) -> Convention:
     config = configparser.ConfigParser()
+    if not Path(file_path).exists():
+        raise FileNotFoundError(f"File {file_path} not found")
     config.read(file_path)
     M_world = np.array(
         [

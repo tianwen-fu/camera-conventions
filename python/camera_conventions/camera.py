@@ -52,6 +52,7 @@ class Camera:
         with open(filename, "wt") as f:
             json.dump(self.to_dict(), f, indent=2)
 
+    @staticmethod
     def from_json(file, convention: Convention):
         data = json.load(file)
         assert data["convention"] == convention.name
