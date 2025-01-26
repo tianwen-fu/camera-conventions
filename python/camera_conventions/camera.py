@@ -81,4 +81,5 @@ def parse_alicevision_camera(
                 T = np.array(list(map(float, file.read().split()))).reshape(4, 4)
     T[:3, 3] /= 100  # convert from cm to m
     fhat = f / max(w, h)  # TODO: why max here?
+    # fhat = f / w
     return Camera(fhat, T, w / h, alice_convention)
